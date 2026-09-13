@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 type Noticia = {
@@ -80,8 +81,15 @@ export default function Home() {
     <main className="min-h-screen bg-gray-50 p-6 md:p-12">
       <div className="max-w-3xl mx-auto">
         <header className="text-center mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-blue-900 mb-2">
-            📰 Noticias de Racing
+          <h1 className="text-3xl md:text-4xl font-bold text-blue-900 mb-2 flex items-center justify-center gap-3">
+            <Image
+              src="/logo-racing.png"
+              alt="Logo de Racing"
+              width={40}
+              height={40}
+              className="h-10 w-10 md:h-12 md:w-12"
+            />
+            Noticias de Racing
           </h1>
           <p className="text-gray-600">
             Extractor profesional desde Olé.com.ar
@@ -126,11 +134,11 @@ export default function Home() {
                 key={index}
                 className="block p-5 bg-white border border-gray-200 rounded-lg shadow-sm transition-all duration-200"
               >
-                <h2 className="text-lg font-semibold text-gray-800">
+                <h2 className="text-2xl font-semibold text-gray-800">
                   {nota.title}
                 </h2>
                 {nota.text && (
-                  <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+                  <p className="mt-2 text-lg text-gray-600 leading-relaxed">
                     {nota.text}
                   </p>
                 )}
@@ -148,22 +156,22 @@ export default function Home() {
         )}
 
         <section className="mt-12">
-          <h2 className="text-2xl font-bold text-blue-900 mb-4">
+          <h2 className="text-3xl font-bold text-blue-900 mb-4">
             📅 Calendario de Racing Club
           </h2>
 
           {calendarioError && (
-            <p className="text-sm text-red-600">⚠️ {calendarioError}</p>
+            <p className="text-base text-red-600">⚠️ {calendarioError}</p>
           )}
 
           {partidos.length > 0 && (
             <ul className="divide-y divide-gray-200 bg-white border border-gray-200 rounded-lg shadow-sm">
               {partidos.map((partido, index) => (
-                <li key={index} className="flex items-center justify-between p-4">
+                <li key={index} className="flex items-center justify-between p-5">
                   <div>
-                    <p className="text-sm font-semibold text-gray-800">
+                    <p className="text-lg font-semibold text-gray-800">
                       <span
-                        className={`inline-block text-xs font-bold uppercase px-2 py-0.5 rounded mr-2 ${
+                        className={`inline-block text-sm font-bold uppercase px-2 py-0.5 rounded mr-2 ${
                           partido.esLocal
                             ? 'bg-blue-100 text-blue-700'
                             : 'bg-gray-100 text-gray-600'
@@ -173,9 +181,9 @@ export default function Home() {
                       </span>
                       {partido.rival}
                     </p>
-                    <p className="text-sm text-gray-500">{partido.fechaLocal ?? partido.fecha} · {partido.competencia}</p>
+                    <p className="text-base text-gray-500">{partido.fechaLocal ?? partido.fecha} · {partido.competencia}</p>
                   </div>
-                  <span className="text-sm font-medium text-gray-700 ml-4 shrink-0">
+                  <span className="text-lg font-medium text-gray-700 ml-4 shrink-0">
                     {partido.horaLocal ?? (partido.hora || 'A confirmar')}
                   </span>
                 </li>
