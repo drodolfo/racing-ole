@@ -14,12 +14,12 @@ Scraper web app for Racing Club (Argentina) news + fixtures. No DB, no env vars,
 
 - `app/page.tsx` — client component that calls our own API routes.
 - `app/api/noticias/racing/route.js` — scrapes `ole.com.ar/racing` with cheerio, then fetches each article body (`#storyBody`, clipped at "Mirá también"). Cached 60s via `next.revalidate`.
-- `app/api/calendario/racing/route.js` — fetches ESPN via the `https://r.jina.ai/<url>` reader proxy (ESPN blocks direct scraping with AWS WAF). Parses the embedded `"events":[...]` JSON by string-slicing the HTML to get real ISO dates; verifies match rows by `data-testid` selectors. Cached 3600s.
+- `app/api/calendario/racing/route.js` — fetches the ESPN fixtures page (`espndeportes.espn.com/futbol/equipo/calendario/_/id/15/racing-club`) via the `https://r.jina.ai/<url>` reader proxy with `X-Return-Format: html` (ESPN blocks HTML scraping with AWS WAF, but espndeportes passes via jina). Parses the embedded `"events":[...]` JSON by string-slicing the HTML to get the upcoming fixtures with real ISO dates. Cached 3600s.
 
 Commands: `npm run dev`, `npm run build`, `npm run lint` (eslint). No test/typecheck script.
 
 Gotchas:
 - Code, comments, and UI text are in Spanish — keep new code that way.
 - API route files are plain `.js` (not `.ts`) even though the rest of the app is TS.
-- Both scrapers depend on live third-party HTML/markup; failures are usually upstream site changes, not code bugs. The `"events"` slice + JSON.parse and the `data-testid` selectors are the brittle parts.
+- Both scrapers depend on live third-party APIs/HTML; failures are usually upstream site changes, not code bugs. The calendar's zero-result cause was the jina proxy returning an AWS WAF challenge page instead of ESPN content. Note: ESPN's schedule *JSON API* (`site.api.espn.com/.../teams/15/schedule`) lags behind the fixtures page and misses upcoming matches — extract the embedded `"events"` JSON from the HTML instead.
 - Scraping is slow and network-dependent — don't run both routes' full path in loops (noticias fetches up to 20 article pages in parallel).
