@@ -37,6 +37,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [partidos, setPartidos] = useState<Partido[]>([]);
   const [calendarioError, setCalendarioError] = useState<string | null>(null);
+  const [noticiaAbierta, setNoticiaAbierta] = useState<number | null>(null);
 
   useEffect(() => {
     const cargarCalendario = async () => {
@@ -129,29 +130,27 @@ export default function Home() {
             <p className="text-sm text-gray-500 text-right">
               Mostrando {noticias.length} noticias recientes
             </p>
-            {noticias.map((nota, index) => (
-              <div
-                key={index}
-                className="block p-5 bg-white border border-gray-200 rounded-lg shadow-sm transition-all duration-200"
-              >
-                <h2 className="text-2xl font-semibold text-gray-800">
-                  {nota.title}
-                </h2>
-                {nota.text && (
-                  <p className="mt-2 text-lg text-gray-600 leading-relaxed">
-                    {nota.text}
-                  </p>
-                )}
-                <a
-                  href={nota.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-600 mt-2 inline-block hover:underline"
+            {noticias.map((nota, index) => {
+              const abierta = noticiaAbierta === index;
+              return (
+                <div
+                  key={index}
+                  className="block p-5 bg-white border border-gray-200 rounded-lg shadow-sm transition-all duration-200"
                 >
-                  Leer en Olé →
-                </a>
-              </div>
-            ))}
+                  <h2
+                    className="text-2xl font-semibold text-gray-800 cursor-pointer hover:text-blue-700 select-none"
+                    onClick={() => setNoticiaAbierta(abierta ? null : index)}
+                  >
+                    {nota.title}
+                  </h2>
+                  {abierta && nota.text && (
+                    <p className="mt-2 text-lg text-gray-600 leading-relaxed">
+                      {nota.text}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 
