@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 type Noticia = {
   title: string;
@@ -36,11 +36,30 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [partidos, setPartidos] = useState<Partido[]>([]);
+  const [cargandoCalendario, setCargandoCalendario] = useState(false);
   const [calendarioError, setCalendarioError] = useState<string | null>(null);
   const [noticiaAbierta, setNoticiaAbierta] = useState<number | null>(null);
 
+  const cargarCalendario = useCallback(async (actualizar = false) => {
+    setCargandoCalendario(true);
+    setCalendarioError(null);
+    try {
+      const res = await fetch(`/api/calendario/racing${actualizar ? '?actualizar=1' : ''}`);
+      const result: CalendarioResponse = await res.json();
+      if (result.success && result.data) {
+        setPartidos(result.data);
+      } else {
+        setCalendarioError(result.error ?? 'No se pudo cargar el calendario.');
+      }
+    } catch {
+      setCalendarioError('Error inesperado al cargar el calendario.');
+    } finally {
+      setCargandoCalendario(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const cargarCalendario = async () => {
+    const cargarCalendarioInicial = async () => {
       try {
         const res = await fetch('/api/calendario/racing');
         const result: CalendarioResponse = await res.json();
@@ -53,7 +72,7 @@ export default function Home() {
         setCalendarioError('Error inesperado al cargar el calendario.');
       }
     };
-    cargarCalendario();
+    cargarCalendarioInicial();
   }, []);
 
   const extraerNoticias = async () => {
@@ -155,9 +174,22 @@ export default function Home() {
         )}
 
         <section className="mt-12">
-          <h2 className="text-3xl font-bold text-blue-900 mb-4">
-            📅 Calendario de Racing Club
-          </h2>
+          <div className="flex items-center justify-between mb-4 gap-4">
+            <h2 className="text-3xl font-bold text-blue-900">
+              📅 Calendario de Racing Club
+            </h2>
+            <button
+              onClick={() => cargarCalendario(true)}
+              disabled={cargandoCalendario}
+              className={`px-4 py-2 rounded-lg font-semibold text-white text-sm shadow-sm transition-all duration-200 shrink-0
+                ${cargandoCalendario
+                  ? 'bg-blue-400 cursor-not-allowed'
+                  : 'bg-blue-700 hover:bg-blue-800 hover:shadow-lg active:scale-[0.98]'
+                }`}
+            >
+              {cargandoCalendario ? 'Actualizando...' : '↻ Actualizar Calendario'}
+            </button>
+          </div>
 
           {calendarioError && (
             <p className="text-base text-red-600">⚠️ {calendarioError}</p>
