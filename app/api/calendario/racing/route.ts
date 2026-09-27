@@ -1,32 +1,32 @@
 import { NextResponse } from 'next/server';
 
-import { fetchJina } from '../../lib/scrapers.js';
+import { fetchJina } from '../../../lib/scrapers';
 
 const CALENDARIO_URL = 'https://espndeportes.espn.com/futbol/equipo/calendario/_/id/15/racing-club';
 
 // Argentina usa UTC-3 todo el año (sin horario de verano). Si cambia la política,
 // este offset fijo podría desfasarse.
-const AR_OFFSET_MS = -3 * 60 * 60 * 1000;
+
 
 const DIAS = ['Dom.', 'Lun.', 'Mar.', 'Mié.', 'Jue.', 'Vie.', 'Sáb.'];
 const MESES = ['Ene.', 'Feb.', 'Mar.', 'Abr.', 'May.', 'Jun.', 'Jul.', 'Ago.', 'Sep.', 'Oct.', 'Nov.', 'Dic.'];
 
-function formatearFecha(iso) {
-  const fecha = new Date(new Date(iso).getTime() + AR_OFFSET_MS);
-  return `${DIAS[fecha.getUTCDay()]} ${fecha.getUTCDate()} de ${MESES[fecha.getUTCMonth()]}`;
+function formatearFecha(iso: string) {
+  const fecha = new Date(iso);
+  const opciones: Intl.DateTimeFormatOptions = { timeZone: 'America/Argentina/Buenos_Aires', weekday: 'short', day: 'numeric', month: 'short' };
+  return fecha.toLocaleString('es-AR', opciones);
 }
 
-function formatearHora(iso) {
-  const fecha = new Date(new Date(iso).getTime() + AR_OFFSET_MS);
-  const hh = String(fecha.getUTCHours()).padStart(2, '0');
-  const mm = String(fecha.getUTCMinutes()).padStart(2, '0');
-  return `${hh}:${mm}`;
+function formatearHora(iso: string) {
+  const fecha = new Date(iso);
+  const opciones: Intl.DateTimeFormatOptions = { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' };
+  return fecha.toLocaleString('es-AR', opciones);
 }
 
 // ESPN bloquea el scraping directo (AWS WAF), así que vamos vía el lector r.jina.ai.
 // Con X-Return-Format: html jina nos devuelve la página de desafío de AWS WAF, así que
 // si eso pasa, reintentamos en formato markdown (que sí devuelve el contenido real).
-function esPaginaWaf(texto) {
+function esPaginaWaf(texto: string) {
   return (
     texto.includes('AwsWafIntegration') ||
     texto.includes('awsWafCookieDomainList') ||
@@ -42,7 +42,7 @@ async function obtenerHtml() {
   return html;
 }
 
-function textoCelda(cell) {
+function textoCelda(cell: string) {
   return cell
     .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
     .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
@@ -50,7 +50,7 @@ function textoCelda(cell) {
     .trim();
 }
 
-function anioPara(fechaStr) {
+function anioPara(fechaStr: string) {
   const m = fechaStr.match(/(\d{1,2})\s+de\s+([A-Z][a-zé]{2,3})\.?$/);
   if (!m) return null;
 
@@ -69,13 +69,13 @@ function anioPara(fechaStr) {
 // El formato markdown de jina trae la tabla del calendario: cada fila es
 // | Dom., 27 de Sep. | TeamA | [v] + iconos | TeamB | 12:15 AM | Liga |  |
 // La columna 1 (TeamA) es siempre el equipo local y el slug del juego (juegoId) es visitante-local.
-function extraerPartidosMarkdown(md) {
+function extraerPartidosMarkdown(md: string) {
   const esFilaFecha = /^\|\s*(S?[aá]b\.|Dom\.|Lun\.|Mar\.|Mi[ée]\.|Jue\.|Vie\.),\s*\d{1,2}\s+de\s+[A-Z][a-zé]{2,3}\.?\s*\|/;
 
   return md
     .split('\n')
     .filter((linea) => esFilaFecha.test(linea))
-    .map((linea) => {
+    .map((linea: string) => {
       const cells = linea.split('|').map((c) => c.trim());
       if (cells.length < 7) return null;
 
@@ -101,11 +101,11 @@ function extraerPartidosMarkdown(md) {
       };
     })
     .filter(Boolean)
-    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    .sort((a: any, b: any) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
 }
 
 // Extrae del JSON embebido en la página HTML los próximos partidos con su fecha ISO real (por id de juego)
-function extraerPartidosJsonHtml(html) {
+function extraerPartidosJsonHtml(html: string) {
   const inicio = html.indexOf('"events":[');
   if (inicio === -1) return [];
 
@@ -133,10 +133,10 @@ function extraerPartidosJsonHtml(html) {
   }
 
   return (eventos || [])
-    .filter((ev) => ev && ev.completed !== true)
-    .map((ev) => {
-      const home = (ev.competitors || []).find((c) => c.isHome);
-      const away = (ev.competitors || []).find((c) => !c.isHome);
+    .filter((ev: any) => ev && ev.completed !== true)
+    .map((ev: any) => {
+      const home = (ev.competitors || []).find((c: any) => c.isHome);
+      const away = (ev.competitors || []).find((c: any) => !c.isHome);
       if (!home || !away) return null;
 
       const esLocal = home.displayName === 'Racing Club';
@@ -153,10 +153,10 @@ function extraerPartidosJsonHtml(html) {
       };
     })
     .filter(Boolean)
-    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    .sort((a: any, b: any) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
 }
 
-function extraerPartidos(texto) {
+function extraerPartidos(texto: string) {
   // La tabla markdown refleja la página real (sin lag). El JSON embebido
   // del HTML a veces queda desactualizado y omite partidos, por eso va primero.
   const markdown = extraerPartidosMarkdown(texto);

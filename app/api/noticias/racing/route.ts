@@ -7,7 +7,7 @@ const HEADERS = {
 };
 
 // Extrae el cuerpo de la nota desde su propia página
-async function extraerContenido(url) {
+async function extraerContenido(url: string) {
   try {
     const res = await fetch(url, { headers: HEADERS });
     if (!res.ok) return '';
@@ -46,7 +46,7 @@ export async function GET() {
 
     const html = await response.text();
     const $ = cheerio.load(html);
-    const articles = [];
+    const articles: {title:string;url:string}[] = [];
     const seenUrls = new Set();
 
     // Buscamos todos los enlaces que contengan la ruta de racing

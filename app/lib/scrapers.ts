@@ -3,12 +3,17 @@ export const HEADERS = {
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
 };
 
-export async function fetchJina(url, extraHeaders = {}) {
-  const res = await fetch(`https://r.jina.ai/${url}`, {
+export async function fetchJina(url: string, extraHeaders: Record<string, string> = {}): Promise<string> {
+  try {
+    const res = await fetch(`https://r.jina.ai/${url}`, {
     cache: 'no-store',
     headers: { ...extraHeaders },
     signal: AbortSignal.timeout(8000),
   });
   if (!res.ok) throw new Error(`Error HTTP: ${res.status}`);
   return await res.text();
+  } catch (e) {
+    console.error('fetchJina error:', e);
+    throw new Error('Scraping failed');
+  }
 }
