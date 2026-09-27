@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 
+import { fetchJina } from '../../lib/scrapers.js';
+
 const CALENDARIO_URL = 'https://espndeportes.espn.com/futbol/equipo/calendario/_/id/15/racing-club';
 
-// Argentina usa UTC-3 todo el año (sin horario de verano)
+// Argentina usa UTC-3 todo el año (sin horario de verano). Si cambia la política,
+// este offset fijo podría desfasarse.
 const AR_OFFSET_MS = -3 * 60 * 60 * 1000;
 
 const DIAS = ['Dom.', 'Lun.', 'Mar.', 'Mié.', 'Jue.', 'Vie.', 'Sáb.'];
@@ -23,18 +26,6 @@ function formatearHora(iso) {
 // ESPN bloquea el scraping directo (AWS WAF), así que vamos vía el lector r.jina.ai.
 // Con X-Return-Format: html jina nos devuelve la página de desafío de AWS WAF, así que
 // si eso pasa, reintentamos en formato markdown (que sí devuelve el contenido real).
-async function fetchJina(headers) {
-  const res = await fetch(`https://r.jina.ai/${CALENDARIO_URL}`, {
-    cache: 'no-store',
-    headers,
-  });
-
-  if (!res.ok) {
-    throw new Error(`Error HTTP: ${res.status}`);
-  }
-  return await res.text();
-}
-
 function esPaginaWaf(texto) {
   return (
     texto.includes('AwsWafIntegration') ||
@@ -44,9 +35,9 @@ function esPaginaWaf(texto) {
 }
 
 async function obtenerHtml() {
-  const html = await fetchJina({ 'X-Return-Format': 'html' });
+  const html = await fetchJina(CALENDARIO_URL, { 'X-Return-Format': 'html' });
   if (esPaginaWaf(html)) {
-    return await fetchJina({});
+    return await fetchJina(CALENDARIO_URL, {});
   }
   return html;
 }

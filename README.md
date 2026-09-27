@@ -34,3 +34,9 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+---
+Puntos de falla conocidos (scraping de terceros):
+- Noticias: olé.com.ar cambia estructura de tarjetas / `#storyBody`; `extraerContenido` corta en "Mirá también".
+- Calendario: ESPN bloquea scraping (AWS WAF). Se usa `r.jina.ai` con fallback html → markdown. El JSON embebido `"events"` puede faltar partidos; preferir tabla markdown.
+- Offset horario: Argentina UTC-3 fijo en código; si cambia la política, `AR_OFFSET_MS` debe actualizarse.

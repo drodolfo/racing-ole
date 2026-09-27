@@ -59,7 +59,9 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const cargarCalendarioInicial = async () => {
+    const cargar = async () => {
+      setCargandoCalendario(true);
+      setCalendarioError(null);
       try {
         const res = await fetch('/api/calendario/racing');
         const result: CalendarioResponse = await res.json();
@@ -70,9 +72,11 @@ export default function Home() {
         }
       } catch {
         setCalendarioError('Error inesperado al cargar el calendario.');
+      } finally {
+        setCargandoCalendario(false);
       }
     };
-    cargarCalendarioInicial();
+    cargar();
   }, []);
 
   const extraerNoticias = async () => {

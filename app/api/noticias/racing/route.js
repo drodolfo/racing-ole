@@ -9,10 +9,7 @@ const HEADERS = {
 // Extrae el cuerpo de la nota desde su propia página
 async function extraerContenido(url) {
   try {
-    const res = await fetch(url, {
-      headers: HEADERS,
-      next: { revalidate: 3600 }
-    });
+    const res = await fetch(url, { headers: HEADERS });
     if (!res.ok) return '';
     const html = await res.text();
     const $ = cheerio.load(html);
@@ -71,7 +68,7 @@ export async function GET() {
         (href.includes('/racing/') || href.includes('/futbol/racing/') || href.includes('/racin/')) &&
         title.length > 30
       ) {
-        if (!href.includes('/tags/') && !href.includes('/autor/') && !href.includes('#') && !href.includes('/enviar-nota/')) {
+        if (!href.includes('/tags/') && !href.includes('/autor/') && !href.includes('#') && !href.includes('/enviar-nota/') && title.length > 10) {
 
           const fullUrl = href.startsWith('http') ? href : `https://www.ole.com.ar${href}`;
 
@@ -84,13 +81,15 @@ export async function GET() {
       }
     });
 
-    // Extraemos el texto de cada nota en paralelo (máx. 20)
-    const noticiasConContenido = await Promise.all(
-      articles.slice(0, 20).map(async (noticia) => ({
-        ...noticia,
-        text: await extraerContenido(noticia.url),
-      }))
-    );
+    const batchSize = 8;
+    const noticiasConContenido = [];
+    for (let i = 0; i < articles.slice(0, 20).length; i += batchSize) {
+      const batch = articles.slice(i, i + batchSize);
+      const results = await Promise.all(
+        batch.map(async (noticia) => ({ ...noticia, text: await extraerContenido(noticia.url) }))
+      );
+      noticiasConContenido.push(...results);
+    }
 
     // Devolvemos un JSON limpio con las primeras 20 noticias
     return NextResponse.json({
